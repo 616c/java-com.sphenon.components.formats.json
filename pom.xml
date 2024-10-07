@@ -47,6 +47,11 @@
       <version>1.0.0</version>
     </dependency>      
     <dependency>
+      <artifactId>system</artifactId>
+      <groupId>com.sphenon.components.basics</groupId>
+      <version>1.0.0</version>
+    </dependency>      
+    <dependency>
       <artifactId>expression</artifactId>
       <groupId>com.sphenon.components.basics</groupId>
       <version>1.0.0</version>
@@ -58,6 +63,11 @@
     </dependency>      
     <dependency>
       <artifactId>notification</artifactId>
+      <groupId>com.sphenon.components.basics</groupId>
+      <version>1.0.0</version>
+    </dependency>      
+    <dependency>
+      <artifactId>event</artifactId>
       <groupId>com.sphenon.components.basics</groupId>
       <version>1.0.0</version>
     </dependency>      
@@ -77,12 +87,32 @@
       <version>1.0.0</version>
     </dependency>      
     <dependency>
+      <artifactId>state</artifactId>
+      <groupId>com.sphenon.components.basics</groupId>
+      <version>1.0.0</version>
+    </dependency>      
+    <dependency>
       <artifactId>quantities</artifactId>
       <groupId>com.sphenon.components.basics</groupId>
       <version>1.0.0</version>
     </dependency>      
     <dependency>
+      <artifactId>factory</artifactId>
+      <groupId>com.sphenon.components.basics</groupId>
+      <version>1.0.0</version>
+    </dependency>      
+    <dependency>
+      <artifactId>operations</artifactId>
+      <groupId>com.sphenon.components.basics</groupId>
+      <version>1.0.0</version>
+    </dependency>      
+    <dependency>
       <artifactId>graph</artifactId>
+      <groupId>com.sphenon.components.basics</groupId>
+      <version>1.0.0</version>
+    </dependency>      
+    <dependency>
+      <artifactId>locating</artifactId>
       <groupId>com.sphenon.components.basics</groupId>
       <version>1.0.0</version>
     </dependency>      

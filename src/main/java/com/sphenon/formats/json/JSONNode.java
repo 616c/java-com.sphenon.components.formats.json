@@ -1,7 +1,7 @@
 package com.sphenon.formats.json;
 
 /****************************************************************************
-  Copyright 2001-2018 Sphenon GmbH
+  Copyright 2001-2024 Sphenon GmbH
 
   Licensed under the Apache License, Version 2.0 (the "License"); you may not
   use this file except in compliance with the License. You may obtain a copy
@@ -31,7 +31,7 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import java.util.*;
 import java.io.*;
 
-public class JSONNode implements GenericIterable<JSONNode> {
+public class JSONNode implements GenericIterable<JSONNode>, ContextAware {
     static final public Class _class = JSONNode.class;
 
     static protected long notification_level;
@@ -39,11 +39,11 @@ public class JSONNode implements GenericIterable<JSONNode> {
     static public    long getNotificationLevel() { return notification_level; }
     static { notification_level = NotificationLocationContext.getLevel(_class); };
 
-    protected CallContext creation_context;
+    protected CallContext      creation_context;
     protected Vector<JsonNode> nodes;
     protected JsonNode         first_node;
     protected Vector<JSONNode> json_nodes;
-    protected String name;
+    protected String           name;
 
     static protected JsonNode parseJSON(CallContext context, String json_string) throws InvalidJSON {
         ObjectMapper mapper = new ObjectMapper();
@@ -174,8 +174,130 @@ public class JSONNode implements GenericIterable<JSONNode> {
         return this.first_node != null;
     }
 
+    public boolean isArray(CallContext context) {
+        if (this.nodes == null) { return false; }
+        for (JsonNode node : this.nodes) {
+            if (node.isArray()) {
+                return true;
+            }
+            if (node.isObject()) {
+            }
+        }
+        return false;
+    }
+
+    public boolean isObject(CallContext context) {
+        if (this.nodes == null) { return false; }
+        for (JsonNode node : this.nodes) {
+            if (node.isObject()) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    protected Object toTree(CallContext context, JsonNode node) {
+        if (node.isArray()) {
+            List l = new ArrayList();
+            for (JsonNode child : node) {
+                if (child != null) {
+                    l.add(this.toTree(context, child));
+                }
+            }
+            return l;
+        } else if (node.isObject()) {
+            Map m = new HashMap();
+            java.util.Iterator<Map.Entry<String,JsonNode>> fields = node.fields();
+            while (fields.hasNext()) {
+                Map.Entry<String,JsonNode> entry = fields.next();
+                m.put(entry.getKey(), this.toTree(context, entry.getValue()));
+            }
+            return m;
+        } else if (node.isIntegralNumber()) {
+            return node.asLong();
+        } else if (node.isFloatingPointNumber()) {
+            return node.asDouble();
+        } else if (node.isTextual()) {
+            return node.asText();
+        } else if (node.isBoolean()) {
+            return node.asBoolean();
+        } else if (node.isNull()) {
+            return null;
+        }
+        return null;
+    }
+
+    public Object toTree(CallContext context) {
+        if (this.nodes == null) { return null; }
+        if (this.nodes.size() == 0) { return null; }
+        if (this.nodes.size() == 1) { return this.toTree(context, this.nodes.get(0)); }
+        List l = new ArrayList();
+        for (JsonNode node : this.nodes) {
+            l.add(this.toTree(context, node));
+        }
+        return l;
+    }
+
+    public long getSize(CallContext context) {
+        if (this.nodes == null) { return 0; }
+        long size = 0;
+        for (JsonNode node : this.nodes) {
+            if (node.isArray()) {
+                size += node.size();
+            }
+        }
+        return size;
+    }
+
+    public JSONNode getChild(CallContext context, long index) {
+        Vector<JsonNode> nodes = new Vector<JsonNode>();
+        if (this.nodes != null && (int) index == index) {
+            for (JsonNode node : this.nodes) {
+                if (node.isArray()) {
+                    JsonNode cjn = node.get((int) index);
+                    if (cjn != null) {
+                        nodes.add(cjn);
+                    }
+                }
+            }
+        }
+        return new JSONNode(context, nodes);
+    }
+
+    public JSONNode getChild(CallContext context, String name) {
+        Vector<JsonNode> nodes = new Vector<JsonNode>();
+        Long index = null;
+        if (this.nodes != null) {
+            for (JsonNode node : this.nodes) {
+                if (node.isObject()) {
+                    JsonNode cjn = node.get(name);
+                    if (cjn != null) {
+                        nodes.add(cjn);
+                    }
+                } else if (    node.isArray()
+                            && (index = (index != null ? index : name.matches("[0-9]+") ? Long.parseLong(name) : null)) != null) {
+                    JsonNode cjn = node.get((int) (long) index);
+                    if (cjn != null) {
+                        nodes.add(cjn);
+                    }
+                }
+            }
+        }
+        return new JSONNode(context, nodes);
+    }
+
+    public JSONNode getByPath(CallContext context, String path) {
+        if (path == null || path.isEmpty()) { return this; }
+        int slashpos = path.indexOf("/");
+        if (slashpos == -1) {
+            return getChild(context, path);
+        } else {
+            return getChild(context, path.substring(0, slashpos)).getByPath(context, path.substring(slashpos+1));
+        }
+    }
+
     public String toString (CallContext context) {
-        return this.first_node.asText();
+        return JSON.toString(context, this.first_node);
     }
 
     public String toString () {
@@ -225,22 +347,18 @@ public class JSONNode implements GenericIterable<JSONNode> {
     //     throw (ExceptionConfigurationError) null; // compiler insists
     // }
 
-    // public String toText (CallContext context) {
-    //     if (this.nodes == null) { return ""; }
-    //     StringBuilder sb = new StringBuilder();
-    //     for (Node node : nodes) {
-    //         if (node.getNodeType() == Node.ELEMENT_NODE) {
-    //             Node child = node.getFirstChild();
-    //             while (child != null) {
-    //                 processTextNode(context, child, sb);
-    //                 child = child.getNextSibling();
-    //             }
-    //         } else {
-    //             processTextNode(context, node, sb);
-    //         }
-    //     }
-    //     return sb.toString();
-    // }
+    public String toText (CallContext context) {
+        if (this.nodes == null) { return ""; }
+        StringBuilder sb = new StringBuilder();
+        for (JsonNode node : this.nodes) {
+            if (node.isValueNode()) {
+                sb.append(node.asText());
+            } else {
+                sb.append(node.toString()); // what is it doing?
+            }
+        }
+        return sb.toString();
+    }
 
     /*
       Baustelle...

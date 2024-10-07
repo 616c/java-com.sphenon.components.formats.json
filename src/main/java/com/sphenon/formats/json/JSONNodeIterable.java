@@ -25,35 +25,17 @@ import com.sphenon.basics.customary.*;
 import java.util.Iterator;
 import java.lang.Iterable;
 
-import com.fasterxml.jackson.databind.JsonNode;
-
-public class JsonNodeExistenceCheck {
+public class JSONNodeIterable implements Iterable<JSONNode> {
 
     protected CallContext context;
-    protected JsonNode json_node;
+    protected JSONNode json_node;
 
-    public JsonNodeExistenceCheck (CallContext context, Object object) {
+    public JSONNodeIterable (CallContext context, Object object) {
         this.context = context;
-        this.json_node = (JsonNode) object;
+        this.json_node = (JSONNode) object;
     }
 
-    public boolean exists(CallContext context) {
-        return (this.json_node != null);
-    }
-
-    public boolean notexists(CallContext context) {
-        return ! exists(context);
-    }
-
-    public JsonNode getValue(CallContext context) {
-        return this.json_node;
-    }
-
-    public boolean notempty(CallContext context) {
-        return this.exists(context) && this.json_node.isArray() && this.json_node.size() != 0;
-    }
-
-    public boolean empty(CallContext context) {
-        return ! notempty(context);
+    public Iterator<JSONNode> iterator() {
+        return this.json_node.getNodes(context).iterator();
     }
 }

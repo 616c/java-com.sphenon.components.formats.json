@@ -25,32 +25,34 @@ import com.sphenon.basics.customary.*;
 import java.util.Iterator;
 import java.lang.Iterable;
 
-import com.fasterxml.jackson.databind.JsonNode;
-
-public class JsonNodeExistenceCheck {
+public class JSONNodeExistenceCheck {
 
     protected CallContext context;
-    protected JsonNode json_node;
+    protected JSONNode json_node;
 
-    public JsonNodeExistenceCheck (CallContext context, Object object) {
+    public JSONNodeExistenceCheck (CallContext context, Object object) {
         this.context = context;
-        this.json_node = (JsonNode) object;
+        this.json_node = (JSONNode) object;
     }
 
     public boolean exists(CallContext context) {
-        return (this.json_node != null);
+        return (this.json_node != null && this.json_node.exists(context));
     }
 
     public boolean notexists(CallContext context) {
         return ! exists(context);
     }
 
-    public JsonNode getValue(CallContext context) {
+    public JSONNode getValue(CallContext context) {
         return this.json_node;
     }
 
     public boolean notempty(CallContext context) {
-        return this.exists(context) && this.json_node.isArray() && this.json_node.size() != 0;
+        return (    this.exists(context)
+                 && (    (this.json_node.isArray(context) && this.json_node.getSize(context) != 0)
+                      || (this.json_node.isObject(context))
+                    )
+               );
     }
 
     public boolean empty(CallContext context) {
